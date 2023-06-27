@@ -1,0 +1,36 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    username: root
+    password: Q11wertY
+    url: jdbc:mysql://localhost:3306/search_engine?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true
+
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: create
+      generate-ddl: true
+    #  show-sql: true
+    open-in-view: true
+  # logs
+  logging:
+    level:
+      org.hibernate.SQL: info
+
+
+indexing-settings:
+  sites:
+
+    - url: https://www.svetlovka.ru
+      name: Центральная городская молодежная библиотека им.М.А.Светлова
+    - url: http://www.playback.ru
+      name: PlayBack.Ru
+    - url: https://volochek.life/
+      name: Вышний Волочёк портал города
+
+
+
