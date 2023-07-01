@@ -13,15 +13,14 @@ import java.util.List;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveTask;
 
-
 @Slf4j
 public class UrlParser extends RecursiveTask<List<StatisticsPage>> {
     private final String url;
     private final List<String> urlList;
     private final List<StatisticsPage> statisticsPageList;
 
-    public UrlParser(String address, List<StatisticsPage> statisticsPageList, List<String> urlList) {
-        this.url = address;
+    public UrlParser(String url, List<StatisticsPage> statisticsPageList, List<String> urlList) {
+        this.url = url;
         this.statisticsPageList = statisticsPageList;
         this.urlList = urlList;
     }
@@ -30,9 +29,10 @@ public class UrlParser extends RecursiveTask<List<StatisticsPage>> {
         Document document = null;
         try {
             Thread.sleep(150);
-            document = Jsoup.connect(url).userAgent(UserAgent.getUserAgent()).referrer("http://www.google.com").get();
+            document = Jsoup.connect(url).userAgent(UserAgent.getUserAgent())
+                    .referrer("http://www.google.com").get();
         } catch (Exception e) {
-            log.debug("Can't get connected to the site" + url);
+            log.debug(url + " - Unable to connect to the site");
         }
         return document;
     }
@@ -49,16 +49,13 @@ public class UrlParser extends RecursiveTask<List<StatisticsPage>> {
             statisticsPageList.add(statisticsPage);
             Elements elements = document.select("body").select("a");
             List<UrlParser> taskList = new ArrayList<>();
-            for (Element el : elements) {
-                String link = el.attr("abs:href");
-                if (link.startsWith(el.baseUri())
-                        && !link.equals(el.baseUri())
-                        && !link.contains("#")
-                        && !link.contains(".png")
-                        && !link.contains(".pdf")
-                        && !link.contains(".JPG")
-                        && !link.contains(".jpg")
-                        && !urlList.contains(link)) {
+            for (Element element : elements) {
+                String link = element.attr("abs:href");
+                if (link.startsWith(element.baseUri())
+                        && !link.equals(element.baseUri())
+                        && !link.contains(".png") && !urlList.contains(link)
+                        && !link.contains(".jpg") && !link.contains(".JPG")
+                        && !link.contains("#") && !link.contains(".pdf") ) {
                     urlList.add(link);
                     UrlParser task = new UrlParser(link, statisticsPageList, urlList);
                     task.fork();
@@ -67,11 +64,10 @@ public class UrlParser extends RecursiveTask<List<StatisticsPage>> {
             }
             taskList.forEach(ForkJoinTask::join);
         } catch (Exception e) {
-            log.debug("Error in parsing this address - " + url);
+            log.debug(url + " - Parsing Error");
             StatisticsPage statisticsPage = new StatisticsPage(url, "", 500);
             statisticsPageList.add(statisticsPage);
         }
         return statisticsPageList;
     }
-
 }

@@ -1,6 +1,5 @@
 package searchengine.model;
 
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,7 +18,7 @@ import java.util.Objects;
 public class Lemma implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private int id;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "site_id", referencedColumnName = "id")
     private SitePage sitePageId;
@@ -28,7 +27,6 @@ public class Lemma implements Serializable {
 
     @OneToMany(mappedBy = "lemma", cascade = CascadeType.ALL)
     private List<IndexSearch> index = new ArrayList<>();
-
 
     public Lemma(String lemma, int frequency, SitePage sitePageId) {
         this.lemma = lemma;

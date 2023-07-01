@@ -25,12 +25,10 @@ spring:
 indexing-settings:
   sites:
 
-    - url: https://www.svetlovka.ru
-      name: Центральная городская молодежная библиотека им.М.А.Светлова
+    - url: https://www.dimonvideo.ru
+      name: DimonVideo
     - url: http://www.playback.ru
       name: PlayBack.Ru
-    - url: https://volochek.life/
-      name: Вышний Волочёк портал города
 
 
 

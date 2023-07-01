@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class SearchServiceImpl implements SearchService {
-    private final Morphology morphology;
+    private final Morphology getLemmaInterface;
     private final LemmaRepository lemmaRepository;
     private final PageRepository pageRepository;
     private final IndexSearchRepository indexSearchRepository;
@@ -30,7 +30,7 @@ public class SearchServiceImpl implements SearchService {
 
     @Override
     public List<StatisticsSearch> allSiteSearch(String searchText, int offset, int limit) {
-        log.info("Getting results of the search \"" + searchText + "\"");
+        log.info("Searching \"" + searchText + "\"");
         List<SitePage> siteList = siteRepository.findAll();
         List<StatisticsSearch> result = new ArrayList<>();
         List<Lemma> foundLemmaList = new ArrayList<>();
@@ -41,7 +41,7 @@ public class SearchServiceImpl implements SearchService {
         List<StatisticsSearch> searchData = null;
         for (Lemma l : foundLemmaList) {
             if (l.getLemma().equals(searchText)) {
-                searchData = new ArrayList<>(getSearchDtoList(foundLemmaList, textLemmaList, offset, limit));
+                searchData = new ArrayList<>(getSearchList(foundLemmaList, textLemmaList, offset, limit));
                 searchData.sort((o1, o2) -> Float.compare(o2.getRelevance(), o1.getRelevance()));
                 if (searchData.size() > limit) {
                     for (int i = offset; i < limit; i++) {
@@ -57,25 +57,25 @@ public class SearchServiceImpl implements SearchService {
                 }
             }
         }
-        log.info("Search done. Got results.");
+        log.info("Search complete.");
         return searchData;
     }
 
     @Override
     public List<StatisticsSearch> siteSearch(String searchText, String url, int offset, int limit) {
-        log.info("Searching for \"" + searchText + "\" in - " + url);
+        log.info("Searching \"" + searchText + "\" at - " + url);
         SitePage site = siteRepository.findByUrl(url);
         List<String> textLemmaList = getLemmaFromSearchText(searchText);
         List<Lemma> foundLemmaList = getLemmaListFromSite(textLemmaList, site);
-        log.info("Search done. Got results.");
-        return getSearchDtoList(foundLemmaList, textLemmaList, offset, limit);
+        log.info("Search complete.");
+        return getSearchList(foundLemmaList, textLemmaList, offset, limit);
     }
 
     private List<String> getLemmaFromSearchText(String searchText) {
         String[] words = searchText.toLowerCase(Locale.ROOT).split(" ");
         List<String> lemmaList = new ArrayList<>();
         for (String lemma : words) {
-            List<String> list = morphology.getLemma(lemma);
+            List<String> list = getLemmaInterface.getLemma(lemma);
             lemmaList.addAll(list);
         }
         return lemmaList;
@@ -93,12 +93,14 @@ public class SearchServiceImpl implements SearchService {
         List<StatisticsSearch> result = new ArrayList<>();
 
         for (Page page : pageList.keySet()) {
+            //
             String uri = page.getPath();
             String content = page.getContent();
             SitePage pageSite = page.getSiteId();
             String site = pageSite.getUrl();
             String siteName = pageSite.getName();
             Float absRelevance = pageList.get(page);
+            //
 
             StringBuilder clearContent = new StringBuilder();
             String title = ClearHTML.clear(content, "title");
@@ -115,7 +117,7 @@ public class SearchServiceImpl implements SearchService {
         List<Integer> lemmaIndex = new ArrayList<>();
         StringBuilder result = new StringBuilder();
         for (String lemma : lemmaList) {
-            lemmaIndex.addAll(morphology.findLemmaIndexInText(content, lemma));
+            lemmaIndex.addAll(getLemmaInterface.findIndexLemmaInText(content, lemma));
         }
         Collections.sort(lemmaIndex);
         List<String> wordsList = getWordsFromContent(content, lemmaIndex);
@@ -134,7 +136,8 @@ public class SearchServiceImpl implements SearchService {
             int start = lemmaIndex.get(i);
             int end = content.indexOf(" ", start);
             int nextPoint = i + 1;
-            while (nextPoint < lemmaIndex.size() && lemmaIndex.get(nextPoint) - end > 0 && lemmaIndex.get(nextPoint) - end < 5) {
+            while (nextPoint < lemmaIndex.size() &&
+                    lemmaIndex.get(nextPoint) - end > 0 && lemmaIndex.get(nextPoint) - end < 5) {
                 end = content.indexOf(" ", lemmaIndex.get(nextPoint));
                 nextPoint += 1;
             }
@@ -165,7 +168,8 @@ public class SearchServiceImpl implements SearchService {
         return text;
     }
 
-    private List<StatisticsSearch> getSearchDtoList(List<Lemma> lemmaList, List<String> textLemmaList, int offset, int limit) {
+    private List<StatisticsSearch> getSearchList(List<Lemma> lemmaList,
+                                                 List<String> textLemmaList, int offset, int limit) {
         List<StatisticsSearch> result = new ArrayList<>();
         pageRepository.flush();
         if (lemmaList.size() >= textLemmaList.size()) {
@@ -204,7 +208,8 @@ public class SearchServiceImpl implements SearchService {
             float absRelevant = pageWithRelevance.get(page) / Collections.max(pageWithRelevance.values());
             pageWithAbsRelevance.put(page, absRelevant);
         }
-        return pageWithAbsRelevance.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, Hashtable::new));
+        return pageWithAbsRelevance.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, Hashtable::new));
     }
-
 }

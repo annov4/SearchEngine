@@ -5,7 +5,7 @@ import lombok.Value;
 
 @Value
 public class StatisticsIndex {
-    Long pageID;
-    Long lemmaID;
+    Integer pageID;
+    Integer lemmaID;
     Float rank;
 }

@@ -22,15 +22,6 @@ public class Analyzer implements Morphology {
     private final static Marker INVALID_SYMBOL_MARKER = MarkerManager.getMarker("INVALID_SYMBOL");
     private final static Logger LOGGER = LogManager.getLogger(LuceneMorphology.class);
 
-
-    static {
-        try {
-            russianLuceneMorphology = new RussianLuceneMorphology();
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage());
-        }
-    }
-
     @Override
     public HashMap<String, Integer> getLemmaList(String content) {
         content = content.toLowerCase(Locale.ROOT)
@@ -62,7 +53,7 @@ public class Analyzer implements Morphology {
     }
 
     @Override
-    public List<Integer> findLemmaIndexInText(String content, String lemma) {
+    public List<Integer> findIndexLemmaInText(String content, String lemma) {
         List<Integer> lemmaIndexList = new ArrayList<>();
         String[] elements = content.toLowerCase(Locale.ROOT).split("\\p{Punct}|\\s");
         int index = 0;
@@ -76,6 +67,13 @@ public class Analyzer implements Morphology {
             index += el.length() + 1;
         }
         return lemmaIndexList;
+    }
+    static {
+        try {
+            russianLuceneMorphology = new RussianLuceneMorphology();
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
+        }
     }
 
     private boolean isServiceWord(String word) {

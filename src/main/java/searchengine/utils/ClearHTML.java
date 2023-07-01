@@ -9,8 +9,8 @@ public class ClearHTML {
         StringBuilder html = new StringBuilder();
         var doc = Jsoup.parse(content);
         var elements = doc.select(selector);
-        for (Element el : elements) {
-            html.append(el.html());
+        for (Element element : elements) {
+            html.append(element.html());
         }
         return Jsoup.parse(html.toString()).text();
     }

@@ -11,8 +11,6 @@ public class ApiErrorController {
     @ExceptionHandler(NullPointerException.class)
     public ResponseEntity<ErrMessage> nullPointerException(NullPointerException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ErrMessage("Search info is not in database"
-                        + exception.getMessage()));
+                .body(new ErrMessage("Search info is not database" + exception.getMessage()));
     }
-
 }

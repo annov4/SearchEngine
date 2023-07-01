@@ -6,13 +6,11 @@ import searchengine.dto.statistics.DetailedStatisticsItem;
 import searchengine.dto.statistics.StatisticsData;
 import searchengine.dto.statistics.StatisticsResponse;
 import searchengine.dto.statistics.TotalStatistics;
-
 import searchengine.model.SitePage;
 import searchengine.model.Status;
 import searchengine.repository.LemmaRepository;
 import searchengine.repository.PageRepository;
 import searchengine.repository.SiteRepository;
-import searchengine.services.StatisticsService;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -25,6 +23,12 @@ public class StatisticsServiceImpl implements StatisticsService {
     private final LemmaRepository lemmaRepository;
     private final SiteRepository siteRepository;
 
+    @Override
+    public StatisticsResponse getStatistics() {
+        TotalStatistics total = getTotal();
+        List<DetailedStatisticsItem> list = getDetailedList();
+        return new StatisticsResponse(true, new StatisticsData(total, list));
+    }
     private TotalStatistics getTotal() {
         Long sites = siteRepository.count();
         Long pages = pageRepository.count();
@@ -51,13 +55,5 @@ public class StatisticsServiceImpl implements StatisticsService {
             result.add(item);
         }
         return result;
-    }
-
-
-    @Override
-    public StatisticsResponse getStatistics() {
-        TotalStatistics total = getTotal();
-        List<DetailedStatisticsItem> list = getDetailedList();
-        return new StatisticsResponse(true, new StatisticsData(total, list));
     }
 }

@@ -13,34 +13,34 @@ import searchengine.repository.LemmaRepository;
 import searchengine.repository.PageRepository;
 import searchengine.repository.SiteRepository;
 
-
 import java.util.Date;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ForkJoinPool;
 
-@RequiredArgsConstructor
 @Slf4j
+@RequiredArgsConstructor
 public class SiteIndexing implements Runnable {
 
     private final PageRepository pageRepository;
     private final SiteRepository siteRepository;
     private final LemmaRepository lemmaRepository;
-    private static final int coreAmount = Runtime.getRuntime().availableProcessors();
+    private static final int CPU_CORES = Runtime.getRuntime().availableProcessors();
     private final IndexSearchRepository indexSearchRepository;
     private final LemmaParser lemmaParser;
     private final IndexParser indexParser;
     private final String url;
     private final SitesList sitesList;
 
-    private List<StatisticsPage> getPageDtoList() throws InterruptedException {
+    private List<StatisticsPage> getPageEntityList() throws InterruptedException {
         if (!Thread.interrupted()) {
             String urlFormat = url + "/";
-            List<StatisticsPage> statisticsPageVector = new Vector<>();
+            List<StatisticsPage> statisticsPageDtoVector = new Vector<>();
             List<String> urlList = new Vector<>();
-            ForkJoinPool forkJoinPool = new ForkJoinPool(coreAmount);
-            List<StatisticsPage> pages = forkJoinPool.invoke(new UrlParser(urlFormat, statisticsPageVector, urlList));
+            ForkJoinPool forkJoinPool = new ForkJoinPool(CPU_CORES);
+            List<StatisticsPage> pages = forkJoinPool
+                    .invoke(new UrlParser(urlFormat, statisticsPageDtoVector, urlList));
             return new CopyOnWriteArrayList<>(pages);
         } else throw new InterruptedException();
     }
@@ -48,19 +48,24 @@ public class SiteIndexing implements Runnable {
     @Override
     public void run() {
         if (siteRepository.findByUrl(url) != null) {
-            log.info("Start delete site data - " + url);
+            log.info(url + " - Start deleting site data");
             deleteDataFromSite();
         }
-        log.info("Indexing this - " + url + " " + getName());
-        saveDateSite();
+        log.info(url + " - " + getName() + " - Indexing in process ");
+        saveSiteToDataBase();
         try {
-            List<StatisticsPage> statisticsPageList = getPageDtoList();
-            saveToBase(statisticsPageList);
+            List<StatisticsPage> statisticsPageDtoList = getPageEntityList();
+            saveInDataBase(statisticsPageDtoList);
             getLemmasPage();
             indexingWords();
         } catch (InterruptedException e) {
-            log.error("Indexing stopped - " + url);
-            errorSite();
+            log.error(url + " - Indexing stopped");
+            //siteIndexingError();//////////
+            SitePage sitePage = siteRepository.findByUrl(url);
+            sitePage.setLastError("Indexing stopped");
+            sitePage.setStatus(Status.FAILED);
+            sitePage.setStatusTime(new Date());
+            siteRepository.save(sitePage);
         }
     }
 
@@ -69,10 +74,10 @@ public class SiteIndexing implements Runnable {
             SitePage sitePage = siteRepository.findByUrl(url);
             sitePage.setStatusTime(new Date());
             lemmaParser.run(sitePage);
-            List<StatisticsLemma> statisticsLemmaList = lemmaParser.getLemmaDtoList();
+            List<StatisticsLemma> statisticsLemmaDtoList = lemmaParser.getLemmaList();
             List<Lemma> lemmaList = new CopyOnWriteArrayList<>();
-            for (StatisticsLemma statisticsLemma : statisticsLemmaList) {
-                lemmaList.add(new Lemma(statisticsLemma.getLemma(), statisticsLemma.getFrequency(), sitePage));
+            for (StatisticsLemma statisticsLemmaDto : statisticsLemmaDtoList) {
+                lemmaList.add(new Lemma(statisticsLemmaDto.getLemma(), statisticsLemmaDto.getFrequency(), sitePage));
             }
             lemmaRepository.flush();
             lemmaRepository.saveAll(lemmaList);
@@ -81,7 +86,7 @@ public class SiteIndexing implements Runnable {
         }
     }
 
-    private void saveToBase(List<StatisticsPage> pages) throws InterruptedException {
+    private void saveInDataBase(List<StatisticsPage> pages) throws InterruptedException {
         if (!Thread.interrupted()) {
             List<Page> pageList = new CopyOnWriteArrayList<>();
             SitePage site = siteRepository.findByUrl(url);
@@ -122,7 +127,7 @@ public class SiteIndexing implements Runnable {
             }
             indexSearchRepository.flush();
             indexSearchRepository.saveAll(indexList);
-            log.info("Done indexing - " + url);
+            log.info(url + " - " + getName() + " - Indexing completed");
             sitePage.setStatusTime(new Date());
             sitePage.setStatus(Status.INDEXED);
             siteRepository.save(sitePage);
@@ -131,13 +136,16 @@ public class SiteIndexing implements Runnable {
         }
     }
 
-    private void saveDateSite() {
-        SitePage sitePage = new SitePage();
-        sitePage.setUrl(url);
+    private void saveSiteToDataBase() {
+
+        SitePage sitePage = siteRepository.findByUrl(url);
+        if (sitePage == null) {
+            sitePage = new SitePage();
+            sitePage.setUrl(url);
+        }
         sitePage.setName(getName());
         sitePage.setStatus(Status.INDEXING);
         sitePage.setStatusTime(new Date());
-        siteRepository.flush();
         siteRepository.save(sitePage);
     }
 
@@ -151,7 +159,7 @@ public class SiteIndexing implements Runnable {
         return "";
     }
 
-    private void errorSite() {
+    private void siteIndexingError() {
         SitePage sitePage = new SitePage();
         sitePage.setLastError("Stop indexing");
         sitePage.setStatus(Status.FAILED);
@@ -159,4 +167,3 @@ public class SiteIndexing implements Runnable {
         siteRepository.save(sitePage);
     }
 }
-

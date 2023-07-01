@@ -11,13 +11,11 @@ import searchengine.model.Page;
 import java.util.List;
 
 @Repository
-public interface IndexSearchRepository extends JpaRepository<IndexSearch, Long> {
-    @Query(value = "SELECT i.* FROM index_search i WHERE i.lemma_id IN :lemmas AND i.page_id IN :pages", nativeQuery = true)
+public interface IndexSearchRepository extends JpaRepository<IndexSearch, Integer> {
+    @Query(value = "SELECT i.* FROM `index` i WHERE i.lemma_id IN :lemmas AND i.page_id IN :pages", nativeQuery = true)
     List<IndexSearch> findByPagesAndLemmas(@Param("lemmas") List<Lemma> lemmaListId,
                                            @Param("pages") List<Page> pageListId);
-
     List<IndexSearch> findByLemmaId (long lemmaId);
     List<IndexSearch> findByPageId (long pageId);
     IndexSearch findByLemmaIdAndPageId (long lemmaId, long pageId);
-
 }

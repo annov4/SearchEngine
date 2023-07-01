@@ -15,10 +15,9 @@ import searchengine.utils.ClearHTML;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
+@Slf4j
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class Index implements IndexParser {
     private final PageRepository pageRepository;
     private final LemmaRepository lemmaRepository;
@@ -38,33 +37,33 @@ public class Index implements IndexParser {
 
         for (Page page : pageList) {
             if (page.getCode() < 400) {
-                long pageId = page.getId();
-                String content = page.getContent();
-                String title = ClearHTML.clear(content, "title");
-                String body = ClearHTML.clear(content, "body");
+                int pageId = page.getId();
+                String pageContent = page.getContent();
+                String title = ClearHTML.clear(pageContent, "title");
+                String body = ClearHTML.clear(pageContent, "body");
                 HashMap<String, Integer> titleList = morphology.getLemmaList(title);
                 HashMap<String, Integer> bodyList = morphology.getLemmaList(body);
 
                 for (Lemma lemma : lemmaList) {
-                    Long lemmaId = lemma.getId();
+                    Integer lemmaId = lemma.getId();
                     String theExactLemma = lemma.getLemma();
                     if (titleList.containsKey(theExactLemma) || bodyList.containsKey(theExactLemma)) {
-                        float wholeRank = 0.0F;
+                        float rank = 0.0F;
                         if (titleList.get(theExactLemma) != null) {
                             Float titleRank = Float.valueOf(titleList.get(theExactLemma));
-                            wholeRank += titleRank;
+                            rank += titleRank;
                         }
                         if (bodyList.get(theExactLemma) != null) {
                             float bodyRank = (float) (bodyList.get(theExactLemma) * 0.8);
-                            wholeRank += bodyRank;
+                            rank += bodyRank;
                         }
-                        statisticsIndexList.add(new StatisticsIndex(pageId, lemmaId, wholeRank));
+                        statisticsIndexList.add(new StatisticsIndex(pageId, lemmaId, rank));
                     } else {
                         log.debug("Lemma not found");
                     }
                 }
             } else {
-                log.debug("Bad status code - " + page.getCode());
+                log.debug("Status code is bad - " + page.getCode());
             }
         }
     }

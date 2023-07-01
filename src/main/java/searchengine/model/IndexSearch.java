@@ -1,25 +1,26 @@
 package searchengine.model;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
-
 import java.io.Serializable;
 import java.util.Objects;
 
+@Data
 @Entity
 @Getter
 @Setter
-@Table(name = "index_search", indexes = {@Index(
+@Table(name = "`index`", indexes = {@Index(
         name = "page_id_list", columnList = "page_id"),
         @Index(name = "lemma_id_list", columnList = "lemma_id")})
 @NoArgsConstructor
 public class IndexSearch implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private int id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "page_id", referencedColumnName = "id")
@@ -29,7 +30,7 @@ public class IndexSearch implements Serializable {
     @JoinColumn(name = "lemma_id", referencedColumnName = "id")
     private Lemma lemma;
 
-    @Column(nullable = false, name = "index_rank")
+    @Column(nullable = false, name = "`rank`")
     private float rank;
 
     public IndexSearch(Page page, Lemma lemma, float rank) {

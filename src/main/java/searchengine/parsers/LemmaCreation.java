@@ -13,42 +13,40 @@ import searchengine.utils.ClearHTML;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class LemmaCreation implements LemmaParser {
     private final PageRepository pageRepository;
     private final Morphology morphology;
     private List<StatisticsLemma> statisticsLemmaList;
 
-    public List<StatisticsLemma> getLemmaDtoList() {
-        return statisticsLemmaList;
-    }
-
     @Override
     public void run(SitePage site) {
         statisticsLemmaList = new CopyOnWriteArrayList<>();
         Iterable<Page> pageList = pageRepository.findAll();
-        TreeMap<String, Integer> lemmaList = new TreeMap<>();
+        TreeMap<String, Integer> lemmasList = new TreeMap<>();
         for (Page page : pageList) {
-            String content = page.getContent();
-            String title = ClearHTML.clear(content, "title");
-            String body = ClearHTML.clear(content, "body");
+            String pageContent = page.getContent();
+            String title = ClearHTML.clear(pageContent, "title");
+            String body = ClearHTML.clear(pageContent, "body");
             HashMap<String, Integer> titleList = morphology.getLemmaList(title);
             HashMap<String, Integer> bodyList = morphology.getLemmaList(body);
             Set<String> allTheWords = new HashSet<>();
             allTheWords.addAll(titleList.keySet());
             allTheWords.addAll(bodyList.keySet());
             for (String word : allTheWords) {
-                int frequency = lemmaList.getOrDefault(word, 0) + 1;
-                lemmaList.put(word, frequency);
+                int frequency = lemmasList.getOrDefault(word, 0) + 1;
+                lemmasList.put(word, frequency);
             }
         }
-        for (String lemma : lemmaList.keySet()) {
-            Integer frequency = lemmaList.get(lemma);
+        for (String lemma : lemmasList.keySet()) {
+            Integer frequency = lemmasList.get(lemma);
             statisticsLemmaList.add(new StatisticsLemma(lemma, frequency));
         }
     }
 
-
+    public List<StatisticsLemma> getLemmaList() {
+        return statisticsLemmaList;
+    }
 }

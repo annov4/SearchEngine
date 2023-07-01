@@ -19,7 +19,7 @@ public class Page implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private long id;
+    private int id;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = false, name = "site_id", referencedColumnName = "id")
     private SitePage siteId;
@@ -29,7 +29,6 @@ public class Page implements Serializable {
     private int code;
     @Column(length = 16777215, columnDefinition = "mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci")
     private String content;
-
 
     @OneToMany(mappedBy = "page", cascade = CascadeType.ALL)
     private List<IndexSearch> index = new ArrayList<>();

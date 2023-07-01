@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface LemmaParser {
     void run(SitePage site);
-    List<StatisticsLemma> getLemmaDtoList();
+    List<StatisticsLemma> getLemmaList();
 }

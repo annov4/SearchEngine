@@ -23,7 +23,7 @@ import java.util.concurrent.Executors;
 @RequiredArgsConstructor
 @Slf4j
 public class IndexingServiceImpl implements IndexingService {
-    private static final int processorCoreCount = Runtime.getRuntime().availableProcessors();
+    private static final int cpuCoreCount = Runtime.getRuntime().availableProcessors();
     private ExecutorService executorService;
     private final PageRepository pageRepository;
     private final SiteRepository siteRepository;
@@ -37,8 +37,10 @@ public class IndexingServiceImpl implements IndexingService {
     public boolean urlIndexing(String url) {
         if (urlCheck(url)) {
             log.info("Start reindexing site - " + url);
-            executorService = Executors.newFixedThreadPool(processorCoreCount);
-            executorService.submit(new SiteIndexing(pageRepository, siteRepository, lemmaRepository, indexSearchRepository, lemmaParser, indexParser, url, sitesList));
+            executorService = Executors.newFixedThreadPool(cpuCoreCount);
+            executorService.submit(new SiteIndexing(pageRepository, siteRepository,
+                    lemmaRepository, indexSearchRepository,
+                    lemmaParser, indexParser, url, sitesList));
             executorService.shutdown();
 
             return true;
@@ -54,13 +56,15 @@ public class IndexingServiceImpl implements IndexingService {
             return false;
         } else {
             List<Site> siteList = sitesList.getSites();
-            executorService = Executors.newFixedThreadPool(processorCoreCount);
+            executorService = Executors.newFixedThreadPool(cpuCoreCount);
             for (Site site : siteList) {
                 String url = site.getUrl();
                 SitePage sitePage = new SitePage();
                 sitePage.setName(site.getName());
                 log.info("Parsing site: " + site.getName());
-                executorService.submit(new SiteIndexing(pageRepository, siteRepository, lemmaRepository, indexSearchRepository, lemmaParser, indexParser, url, sitesList));
+                executorService.submit(new SiteIndexing(pageRepository, siteRepository,
+                        lemmaRepository, indexSearchRepository,
+                        lemmaParser, indexParser, url, sitesList));
             }
             executorService.shutdown();
         }
@@ -70,8 +74,14 @@ public class IndexingServiceImpl implements IndexingService {
     @Override
     public boolean stopIndexing() {
         if (isIndexingActive()) {
-            log.info("Indexing was stopped");
             executorService.shutdownNow();
+            log.info("Indexing stopped");
+           // Iterable<SitePage> siteList = siteRepository.findAll();
+           // for (SitePage site : siteList) {
+           //     if (site.getStatus() == Status.INDEXING) {
+            //        site.setStatus(Status.FAILED);
+            //    }
+           // }
             return true;
         } else {
             log.info("Indexing was not stopped because it was not started");

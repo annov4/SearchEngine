@@ -12,10 +12,10 @@ import java.util.Collection;
 import java.util.List;
 
 @Repository
-public interface PageRepository extends JpaRepository<Page, Long> {
+public interface PageRepository extends JpaRepository<Page, Integer> {
     long countBySiteId(SitePage siteId);
     Iterable<Page> findBySiteId(SitePage site);
-    @Query(value = "SELECT p.* FROM Page p JOIN index_search i ON p.id = i.page_id WHERE i.lemma_id IN :lemmas", nativeQuery = true)
+    @Query(value = "SELECT p.* FROM Page p JOIN `index` i ON p.id = i.page_id WHERE i.lemma_id IN :lemmas",
+            nativeQuery = true)
     List<Page> findByLemmaList(@Param("lemmas") Collection<Lemma> lemmaListId);
-
 }
